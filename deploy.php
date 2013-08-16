@@ -10,6 +10,8 @@
 
 // =========================================[ Configuration start ]===
 
+env("HOME=/home/ec2-user/");
+
 /**
  * Protect the script from unauthorized access by using a secret string.
  * If it's not present in the access URL as a GET variable named `sat`
@@ -17,7 +19,7 @@
  *
  * @var string
  */
-define('SECRET_ACCESS_TOKEN', '!@#$ACCESSTOKEN!@#$');
+define('SECRET_ACCESS_TOKEN', 'SOCIALCRAWL');
 
 /**
  * The address of the remote GIT repository that contains the code we're
@@ -40,7 +42,7 @@ define('BRANCH', 'master');
  *
  * @var string Full path including the trailing slash
  */
-define('TARGET_DIR', '/var/www/html/SocialCrawl/');
+define('TARGET_DIR', '/var/www/html/SocialCrawl-Web.git/');
 
 /**
  * Weather to delete the files that are not in the repository but are on the
