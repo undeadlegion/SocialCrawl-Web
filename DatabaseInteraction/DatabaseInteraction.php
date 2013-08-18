@@ -62,7 +62,21 @@ class DatabaseInteraction {
 		}
 		return $eventArray;
 	}
-
+	function getEventWithID($eventID) {
+		$result = mysql_query("SELECT * FROM events WHERE id=$eventID");
+		$eventCount = 0;
+		while ($row = mysql_fetch_array($result)) {
+			$eventArray[$eventCount][0] = $row['id'];
+			$eventArray[$eventCount][1] = $row['creatorid'];
+			$eventArray[$eventCount][2] = $row['date'];
+			$eventArray[$eventCount][3] = $row['title'];
+			$eventArray[$eventCount][4] = $row['description'];
+			$eventArray[$eventCount][5] = $row['picture'];
+			$eventArray[$eventCount][6] = $row['privacy'];
+			$eventCount++;
+		}
+		return $eventArray;
+	}
 	function getFacebookComments($eventID){
 			$facebookLibrary = new FacebookEvents();
 			$comments = $facebookLibrary->getEventComments($eventID, 0);

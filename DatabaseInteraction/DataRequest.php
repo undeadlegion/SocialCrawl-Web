@@ -109,6 +109,37 @@ if ($type == "bars") {
 	}
 	
 	print $XMLDoc->saveXML();
+} elseif ($type == "eventwithid") {
+	$db = new DatabaseInteraction();
+	/*
+	*/
+	$events = $db->getEventWithID($id);
+		
+	$root = $XMLDoc->createElement('Events');
+	$root = $XMLDoc->appendChild($root);
+	
+	foreach ($events as $event) {
+		
+		$eventElement = $XMLDoc->createElement('Event');
+		$eventElement = $root->appendChild($eventElement);
+		$eventElement->setAttribute('id',$event[0]);
+		
+		$creatorElement = $XMLDoc->createElement('creatorid',$event[1]);
+		$dateElement = $XMLDoc->createElement('date',$event[2]);
+		$titleElement = $XMLDoc->createElement('title',$event[3]);
+		$descriptionElement = $XMLDoc->createElement('description',$event[4]);
+		$pictureElement = $XMLDoc->createElement('picture',$event[5]);
+		$privacyElement = $XMLDoc->createElement('privacy',$event[6]);
+		
+		$eventElement->appendChild($creatorElement);
+		$eventElement->appendChild($dateElement);
+		$eventElement->appendChild($titleElement);
+		$eventElement->appendChild($descriptionElement);
+		$eventElement->appendChild($pictureElement);
+		$eventElement->appendChild($privacyElement);
+	}
+	
+	print $XMLDoc->saveXML();
 } elseif ($type == "barsforevent") {
 	$db = new DatabaseInteraction();
 	$bars = $db->getEventBars($id);
