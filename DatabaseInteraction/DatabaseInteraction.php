@@ -13,9 +13,9 @@ class DatabaseInteraction {
 
 	function __construct() {
 		$url = "localhost";
-		$dbname = "groovege_campuscrawler";
-		$user = "groovege";
-		$pw = "7arf476TjC";
+		$dbname = "illini_crawler";
+		$user = "illini_crawler";
+		$pw = "illini_crawler";
 
 		mysql_connect($url,$user,$pw);
 		@mysql_select_db($dbname) or die("Cannot connect to database!");
