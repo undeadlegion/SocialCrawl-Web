@@ -3,4 +3,4 @@ SocialCrawl-Web
 
 SocialCrawl Website 
 
-TEST
+Website for the SocialCrawl platform
