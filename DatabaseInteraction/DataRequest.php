@@ -14,15 +14,12 @@ $XMLDoc->formatOutput = true; //make output XML file look nice
 
 $type = $_GET['type'];
 $id = $_GET['id'];
-$school_id = $_GET['school_id'];
-$date_id = $_GET['date_id'];
-$event_id = $_GET['event_id'];
 
 //request for list of bar data
 if ($type == "bars") {
 	
 	$db = new DatabaseInteraction();
-	$bars = $db->getBarData($school_id);
+	$bars = $db->getBarData($id);
 	
 	$root = $XMLDoc->createElement('Bars');
 	$root = $XMLDoc->appendChild($root);
