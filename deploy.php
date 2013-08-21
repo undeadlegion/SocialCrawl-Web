@@ -10,7 +10,7 @@
 
 // =========================================[ Configuration start ]===
 
-putenv("HOME=/home/ec2-user/");
+//putenv("HOME=/home/ec2-user/");
 
 /**
  * Protect the script from unauthorized access by using a secret string.
