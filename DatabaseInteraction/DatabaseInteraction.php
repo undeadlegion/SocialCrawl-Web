@@ -174,11 +174,11 @@ class DatabaseInteraction {
 	 *
 	 */
 	function getEventBars($id) {
-		$result = mysql_query("SELECT * FROM event_bars where event_id=$id ORDER BY time ASC");
+		$result = mysql_query("SELECT * FROM event_bars where event_id=$id ORDER BY datetime ASC");
 		$barsCount = 0;
 		while ($row = mysql_fetch_array($result)) {
 			$barsArray[$barsCount][0] = $row['bar_id'];
-			$barsArray[$barsCount][1] = $row['time'];
+			$barsArray[$barsCount][1] = $row['datetime'];
 			$barsCount++;
 		}
 		return $barsArray;
