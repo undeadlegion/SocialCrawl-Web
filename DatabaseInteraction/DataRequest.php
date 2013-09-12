@@ -14,6 +14,13 @@ $XMLDoc->formatOutput = true; //make output XML file look nice
 
 $type = $_GET['type'];
 $id = $_GET['id'];
+$event_id = $_GET['event_id'];
+$creator_id = $_GET['creator_id'];
+$date = $_GET['date'];
+$title = $_GET['title'];
+$description = $_GET['description'];
+$picture = $_GET['picture'];
+$privacy = $_GET['privacy'];
 
 //request for list of bar data
 if ($type == "bars") {
@@ -108,8 +115,6 @@ if ($type == "bars") {
 	print $XMLDoc->saveXML();
 } elseif ($type == "eventwithid") {
 	$db = new DatabaseInteraction();
-	/*
-	*/
 	$events = $db->getEventWithID($id);
 		
 	$root = $XMLDoc->createElement('Events');
@@ -156,9 +161,36 @@ if ($type == "bars") {
 	print $XMLDoc->saveXML();
 } elseif ($type == "specialsforevent"){
 	$db = new DatabaseInteraction();
-	$specials = $db->getEventSpecials($id);
+	$specials = $db->getEventSpecialsForEvent($id);
+	$root = $XMLDoc->createElement('BarSpecials');
+	$root = $XMLDoc->appendChild($root);
+	foreach( $specials as $bar){
+		$barSpecial = $XMLDoc->createElement('BarSpecial');
+		$barSpecial = $root->appendChild($barSpecial);
+		$barSpecial->setAttribute('id', $bar['bar_id']);
+		$special = $XMLDoc->createElement('specials', htmlentities($bar['specials']));
+		$barSpecial->appendChild($special);
+	}
+	print $XMLDoc->saveXML();
+} elseif ($type == "feedback"){
+	$db = new DatabaseInteraction();
+	$db->insertFeedback($id, $message);
+
+	$root = $XMLDoc->createElement('Feedback');
+	$root = $XMLDoc->appendChild($root);
+	print $XMLDoc->saveXML();
+} elseif ($type == "createnewevent"){
+	$db = new DatabaseInteraction();
+	$ret = $db->createNewEvent($event_id, $creator_id, $date, $title, $description, $picture, $privacy);
 	
-	$root = $XMLDoc->setAttribute('id', $bar['id']);
+	if (!$ret) {
+		$root = $XMLDoc->createElement('Success');
+	} else {
+		$root = $XMLDoc->createElement('Error');
+	}
+	
+	$root = $XMLDoc->appendChild($root);
+	print $XMLDoc->saveXML();
 }
 
 ?>

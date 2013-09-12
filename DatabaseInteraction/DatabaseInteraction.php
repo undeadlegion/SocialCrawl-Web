@@ -21,11 +21,9 @@ class DatabaseInteraction {
 		@mysql_select_db($dbname) or die("Cannot connect to database!");
 	}
 
-	/**
-	 * Retrieve bar data from database
-	 *
-	 * returns $barArray - 2d array of bar data
-	 */
+/***************************************************************************************************
+ *                                        Bar Functions
+ **************************************************************************************************/
 	function getBarData($school_id) {
 		$result = mysql_query("SELECT * FROM bars WHERE school_id=$school_id");
 		while ($row = mysql_fetch_array($result)) {
@@ -43,10 +41,35 @@ class DatabaseInteraction {
 		return $barArray;
 	}
 	
-	/**
-	 * Retrieve event data
-	 *
-	 */
+	function getEventBars($id) {
+		$result = mysql_query("SELECT * FROM event_bars where event_id=$id ORDER BY datetime ASC");
+		$barsCount = 0;
+		while ($row = mysql_fetch_array($result)) {
+			$barsArray[$barsCount][0] = $row['bar_id'];
+			$barsArray[$barsCount][1] = $row['datetime'];
+			$barsCount++;
+		}
+		return $barsArray;
+	}
+
+
+/***************************************************************************************************
+ *                                        Event Functions
+ **************************************************************************************************/
+	function getEventDetail($id) {
+		$result = mysql_query("SELECT * FROM events WHERE id=$id");
+		$row = mysql_fetch_array($result);
+		$event = new Event();
+		$event->id = $row['id'];
+		$event->creatorid = $row['creatorid'];
+		$event->date = $row['date'];
+		$event->title = $row['title'];
+		$event->description = $row['description'];
+		$event->picture = $row['picture'];
+		$event->privacy = $row['privacy'];
+		return $event;
+	}
+
 	function getEventData() {
 		$result = mysql_query("SELECT * FROM events");
 		$eventCount = 0;
@@ -62,75 +85,8 @@ class DatabaseInteraction {
 		}
 		return $eventArray;
 	}
-	function getEventWithID($eventID) {
-		$result = mysql_query("SELECT * FROM events WHERE id=$eventID");
-		$eventCount = 0;
-		while ($row = mysql_fetch_array($result)) {
-			$eventArray[$eventCount][0] = $row['id'];
-			$eventArray[$eventCount][1] = $row['creatorid'];
-			$eventArray[$eventCount][2] = $row['date'];
-			$eventArray[$eventCount][3] = $row['title'];
-			$eventArray[$eventCount][4] = $row['description'];
-			$eventArray[$eventCount][5] = $row['picture'];
-			$eventArray[$eventCount][6] = $row['privacy'];
-			$eventCount++;
-		}
-		return $eventArray;
-	}
-	function getFacebookComments($eventID){
-			$facebookLibrary = new FacebookEvents();
-			$comments = $facebookLibrary->getEventComments($eventID, 0);
-
-
-			///////////////////////////////////////////////////////////////
-			// 	Format output and return
-			///////////////////////////////////////////////////////////////
-			$allComments = array();
-
-			for ($curComment = 0; $curComment < count($comments); $curComment++){
-
-				$newComment = new EventComment();
-
-				$commentDetails 			= $comments[$curComment];
-				$newComment->ID 			= $curComment; // for now
-				$newComment->UserID 		= $commentDetails->posterID;
-				$newComment->postTime 		= $commentDetails->postTime;
-				$newComment->commentText 	= $commentDetails->message;
-
-				$allComments[] = $newComment;
-					
-
-			}
-		return $allComments;
-	}
 	
-	/**
-	 * Retrieve event data for a given facebook user ID
-	 *
-	 */
-	function getEventDataForID($id) {
-		$result = mysql_query("SELECT * FROM events INNER JOIN event_friends ON events.id=event_friends.event_id WHERE event_friends.friend_id=".$id." ORDER BY date ASC");
-		$eventCount = 0;
-		while ($row = mysql_fetch_array($result)) {
-			$eventArray[$eventCount][0] = $row['id'];
-			$eventArray[$eventCount][1] = $row['creatorid'];
-			$eventArray[$eventCount][2] = $row['date'];
-			$eventArray[$eventCount][3] = $row['title'];
-			$eventArray[$eventCount][4] = $row['description'];
-			$eventArray[$eventCount][5] = $row['picture'];
-			$eventArray[$eventCount][6] = $row['privacy'];
-			$eventCount++;
-		}
-		return $eventArray;
-	}
-
-	/**
-	 * Returns all of the events for a given user
-	 * Enter description here ...
-	 * @param unknown_type $id
-	 */
 	function getEventDataForUser() {
-		//Get FB ID
 		$authLibrary = new FacebookAuthentication();
 		$userid = $authLibrary->getUserID();
 		 
@@ -148,9 +104,8 @@ class DatabaseInteraction {
 		}
 		return $eventArray;
 	}
-	
+
 	function getEventsDataCreatedByUser(){
-				//Get FB ID
 		$authLibrary = new FacebookAuthentication();
 		$userid = $authLibrary->getUserID();
 		
@@ -169,57 +124,69 @@ class DatabaseInteraction {
 		return $eventArray;
 	}
 
-	/**
-	 * Retrieve bars for a given event
-	 *
-	 */
-	function getEventBars($id) {
-		$result = mysql_query("SELECT * FROM event_bars where event_id=$id ORDER BY datetime ASC");
-		$barsCount = 0;
+	function getEventWithID($eventID) {
+		$result = mysql_query("SELECT * FROM events WHERE id=$eventID");
+		$eventCount = 0;
 		while ($row = mysql_fetch_array($result)) {
-			$barsArray[$barsCount][0] = $row['bar_id'];
-			$barsArray[$barsCount][1] = $row['datetime'];
-			$barsCount++;
+			$eventArray[$eventCount][0] = $row['id'];
+			$eventArray[$eventCount][1] = $row['creatorid'];
+			$eventArray[$eventCount][2] = $row['date'];
+			$eventArray[$eventCount][3] = $row['title'];
+			$eventArray[$eventCount][4] = $row['description'];
+			$eventArray[$eventCount][5] = $row['picture'];
+			$eventArray[$eventCount][6] = $row['privacy'];
+			$eventCount++;
 		}
-		return $barsArray;
-	}
-	
-	function getEventDetail($id) {
-		$result = mysql_query("SELECT * FROM events WHERE id=$id");
-		$row = mysql_fetch_array($result);
-		$event = new Event();
-		$event->id = $row['id'];
-		$event->creatorid = $row['creatorid'];
-		$event->date = $row['date'];
-		$event->title = $row['title'];
-		$event->description = $row['description'];
-		$event->picture = $row['picture'];
-		$event->privacy = $row['privacy'];
-		return $event;
+		return $eventArray;
 	}
 
-	/**
-	 * Create new event
-	 *
-	 */
+	function getEventDataForID($id) {
+		$result = mysql_query("SELECT * FROM events INNER JOIN event_friends ON events.id=event_friends.event_id WHERE event_friends.friend_id=".$id." ORDER BY date ASC");
+		$eventCount = 0;
+		while ($row = mysql_fetch_array($result)) {
+			$eventArray[$eventCount][0] = $row['id'];
+			$eventArray[$eventCount][1] = $row['creatorid'];
+			$eventArray[$eventCount][2] = $row['date'];
+			$eventArray[$eventCount][3] = $row['title'];
+			$eventArray[$eventCount][4] = $row['description'];
+			$eventArray[$eventCount][5] = $row['picture'];
+			$eventArray[$eventCount][6] = $row['privacy'];
+			$eventCount++;
+		}
+		return $eventArray;
+	}
+
+
+/***************************************************************************************************
+ *                                          Event Creation
+ **************************************************************************************************/
 	function createNewEvent($id, $creatorid, $date, $title, $description, $picture, $privacy) {
 		print $id;
 		$values = $id.", ".$creatorid.", '".$date."', '".$title."', '".$description."', '".$picture."', '".$privacy."'";
 		$result = mysql_query("INSERT INTO events (id, creatorid, date, title, description, picture, privacy) VALUES (".$values.")");
 		print $result;
+		return $result;
+	}
+
+	function addGuestsToEvent($id,$friends) {
+		foreach ($friends as $friendID) {
+			$result = mysql_query("INSERT INTO event_friends (event_id, friend_id) VALUES (".$id.",".$friendID.")");
+		}
 	}
 	
-	/**
-	 * getCurrentUserID
-	 * 
-	 * This function gets the current ID of the user that is logged in.
-	 */
-	function getCurrentUserID(){
-		$authLibrary = new FacebookAuthentication();
-		$userid = $authLibrary->getUserID();
-		return $userid;
+
+	function addBarsToEvent($id,$bars,$dateTimes) {
+		for ($i = 0; $i < count($bars); $i++) {
+			$time = date_parse($dateTimes[$i]);
+			$time = $time["hour"] . ":" . $time["minute"] . ":" . $time["second"];
+			$result = mysql_query("INSERT INTO event_bars (event_id, bar_id, time, datetime) VALUES (".$id.",".$bars[$i].",'".$time."','".$dateTimes[$i]."')");
+		}
 	}
+
 	
+/***************************************************************************************************
+ *                                        Helper Functions
+ **************************************************************************************************/
 	function editEventNameDB($eventID,$newTitle){
 		mysql_query("UPDATE events
 					SET title = '$newTitle'
@@ -236,6 +203,37 @@ class DatabaseInteraction {
 		mysql_query("UPDATE events
 					SET date = '$newDate'
 					WHERE id = $eventID");
+	}
+
+
+	// Move out of DB Interaction
+	function getCurrentUserID(){
+		$authLibrary = new FacebookAuthentication();
+		$userid = $authLibrary->getUserID();
+		return $userid;
+	}
+	// Move out of DB Interaction
+	function getFacebookComments($eventID){
+			$facebookLibrary = new FacebookEvents();
+			$comments = $facebookLibrary->getEventComments($eventID, 0);
+
+			$allComments = array();
+
+			for ($curComment = 0; $curComment < count($comments); $curComment++){
+
+				$newComment = new EventComment();
+
+				$commentDetails 			= $comments[$curComment];
+				$newComment->ID 			= $curComment; // for now
+				$newComment->UserID 		= $commentDetails->posterID;
+				$newComment->postTime 		= $commentDetails->postTime;
+				$newComment->commentText 	= $commentDetails->message;
+
+				$allComments[] = $newComment;
+					
+
+			}
+		return $allComments;
 	}
 
 }
