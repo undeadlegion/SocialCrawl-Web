@@ -22,12 +22,15 @@ class DatabaseInteraction {
 	}
 
 /***************************************************************************************************
- *                                        Bar Functions
+ *                                        Bars Fetching
  **************************************************************************************************/
-	function getBarData($school_id) {
-		$result = mysql_query("SELECT * FROM bars WHERE school_id=$school_id");
+	function getBarsForLocation($location_id) {
+		$result = mysql_query("SELECT * FROM bars WHERE location_id=$location_id");
+		$barArray = array();
+
 		while ($row = mysql_fetch_array($result)) {
-			$bar['id'] = $row['id'];
+			$bar = array();
+			$bar['bar_id'] = $row['bar_id'];
 			$bar['name'] = $row['name'];
 			$bar['address'] = $row['address'];
 			$bar['description'] = $row['description'];
@@ -41,151 +44,136 @@ class DatabaseInteraction {
 		return $barArray;
 	}
 	
-	function getEventBars($id) {
-		$result = mysql_query("SELECT * FROM event_bars where event_id=$id ORDER BY datetime ASC");
-		$barsCount = 0;
+	function getBarsForEvent($event_id) {
+		$result = mysql_query("SELECT * FROM event_bars where event_id=$event_id ORDER BY start_time ASC");
+		$barArray = array();
+		
 		while ($row = mysql_fetch_array($result)) {
-			$barsArray[$barsCount][0] = $row['bar_id'];
-			$barsArray[$barsCount][1] = $row['datetime'];
-			$barsCount++;
+			$bar = array();
+			$bar['bar_id'] = $row['bar_id'];
+			$bar['start_time'] = $row['start_time'];
+			$barArray[] = $bar;
 		}
-		return $barsArray;
+		return $barArray;
 	}
 
 
 /***************************************************************************************************
- *                                        Event Functions
+ *                                        Events Fetching
  **************************************************************************************************/
-	function getEventDetail($id) {
-		$result = mysql_query("SELECT * FROM events WHERE id=$id");
-		$row = mysql_fetch_array($result);
-		$event = new Event();
-		$event->id = $row['id'];
-		$event->creatorid = $row['creatorid'];
-		$event->date = $row['date'];
-		$event->title = $row['title'];
-		$event->description = $row['description'];
-		$event->picture = $row['picture'];
-		$event->privacy = $row['privacy'];
-		return $event;
-	}
 
-	function getEventData() {
-		$result = mysql_query("SELECT * FROM events");
-		$eventCount = 0;
-		while ($row = mysql_fetch_array($result)) {
-			$eventArray[$eventCount][0] = $row['id'];
-			$eventArray[$eventCount][1] = $row['creatorid'];
-			$eventArray[$eventCount][2] = $row['date'];
-			$eventArray[$eventCount][3] = $row['title'];
-			$eventArray[$eventCount][4] = $row['description'];
-			$eventArray[$eventCount][5] = $row['picture'];
-			$eventArray[$eventCount][6] = $row['privacy'];
-			$eventCount++;
-		}
-		return $eventArray;
-	}
-	
-	function getEventDataForUser() {
-		$authLibrary = new FacebookAuthentication();
-		$userid = $authLibrary->getUserID();
-		 
-		$result = mysql_query("SELECT * FROM events INNER JOIN event_friends ON events.id=event_friends.event_id WHERE event_friends.friend_id=".$userid);
-		$eventCount = 0;
-		while ($row = mysql_fetch_array($result)) {
-			$eventArray[$eventCount][0] = $row['id'];
-			$eventArray[$eventCount][1] = $row['creatorid'];
-			$eventArray[$eventCount][2] = $row['date'];
-			$eventArray[$eventCount][3] = $row['title'];
-			$eventArray[$eventCount][4] = $row['description'];
-			$eventArray[$eventCount][5] = $row['picture'];
-			$eventArray[$eventCount][6] = $row['privacy'];
-			$eventCount++;
-		}
+	function getAllEvents() {
+		$eventArray = $this->getEventWithId(" '' OR 1");
 		return $eventArray;
 	}
 
-	function getEventsDataCreatedByUser(){
-		$authLibrary = new FacebookAuthentication();
-		$userid = $authLibrary->getUserID();
-		
-		$result = mysql_query("SELECT * FROM events WHERE creatorid =".$userid);
-		$eventCount = 0;
-		while ($row = mysql_fetch_array($result)) {
-			$eventArray[$eventCount][0] = $row['id'];
-			$eventArray[$eventCount][1] = $row['creatorid'];
-			$eventArray[$eventCount][2] = $row['date'];
-			$eventArray[$eventCount][3] = $row['title'];
-			$eventArray[$eventCount][4] = $row['description'];
-			$eventArray[$eventCount][5] = $row['picture'];
-			$eventArray[$eventCount][6] = $row['privacy'];
-			$eventCount++;
-		}
+	function getEventWithId($event_id) {
+		$result = mysql_query("SELECT * FROM events WHERE event_id=$event_id");
+		$eventArray = $this->fetchEventArray($result);
 		return $eventArray;
 	}
 
-	function getEventWithID($eventID) {
-		$result = mysql_query("SELECT * FROM events WHERE id=$eventID");
-		$eventCount = 0;
-		while ($row = mysql_fetch_array($result)) {
-			$eventArray[$eventCount][0] = $row['id'];
-			$eventArray[$eventCount][1] = $row['creatorid'];
-			$eventArray[$eventCount][2] = $row['date'];
-			$eventArray[$eventCount][3] = $row['title'];
-			$eventArray[$eventCount][4] = $row['description'];
-			$eventArray[$eventCount][5] = $row['picture'];
-			$eventArray[$eventCount][6] = $row['privacy'];
-			$eventCount++;
-		}
+	function getEventsForId($guest_id) {
+		$result = mysql_query("SELECT * FROM events INNER JOIN event_guests ON events.event_id=event_guests.event_id WHERE event_guests.guest_id=$guest_id ORDER BY start_time ASC");
+		$eventArray = $this->fetchEventArray($result);
 		return $eventArray;
 	}
 
-	function getEventDataForID($id) {
-		$result = mysql_query("SELECT * FROM events INNER JOIN event_friends ON events.id=event_friends.event_id WHERE event_friends.friend_id=".$id." ORDER BY date ASC");
-		$eventCount = 0;
-		while ($row = mysql_fetch_array($result)) {
-			$eventArray[$eventCount][0] = $row['id'];
-			$eventArray[$eventCount][1] = $row['creatorid'];
-			$eventArray[$eventCount][2] = $row['date'];
-			$eventArray[$eventCount][3] = $row['title'];
-			$eventArray[$eventCount][4] = $row['description'];
-			$eventArray[$eventCount][5] = $row['picture'];
-			$eventArray[$eventCount][6] = $row['privacy'];
-			$eventCount++;
-		}
-		return $eventArray;
+	function getCreatedEvents($creator_id) {
+		$result = mysql_query("SELECT * FROM events WHERE creator_id=$creator_id ORDER BY start_time ASC");
+		$eventArray = $this->fetchEventArray($result);
+		return $eventArray;		
 	}
-
 
 /***************************************************************************************************
  *                                          Event Creation
  **************************************************************************************************/
-	function createNewEvent($id, $creatorid, $date, $title, $description, $picture, $privacy) {
-		print $id;
-		$values = $id.", ".$creatorid.", '".$date."', '".$title."', '".$description."', '".$picture."', '".$privacy."'";
-		$result = mysql_query("INSERT INTO events (id, creatorid, date, title, description, picture, privacy) VALUES (".$values.")");
-		print $result;
+	function addNewEvent($event_id, $creator_id, $location_id, $start_time, $name, $description, $image, $privacy_type) {
+		$values = "$event_id, $creator_id, $location_id, '$start_time', '$name', '$description', '$image', '$privacy_type'";
+		$query = "INSERT INTO events (event_id, creator_id, location_id, start_time, name, description, image, privacy_type) VALUES ($values)";
+		$result = mysql_query($query);
+		if (!$result) {
+			echo "Invalid query: $query\nError:".mysql_error()."\n";
+		}
 		return $result;
 	}
 
-	function addGuestsToEvent($id,$friends) {
-		foreach ($friends as $friendID) {
-			$result = mysql_query("INSERT INTO event_friends (event_id, friend_id) VALUES (".$id.",".$friendID.")");
+	function addGuestsToEvent($event_id, $guests) {
+		$result = true;
+		foreach ($guests as $guest_id) {
+			$query = "INSERT INTO event_guests (event_id, guest_id) VALUES ($event_id, $guest_id)";
+			$result = $result && mysql_query($query);
 		}
-	}
-	
-
-	function addBarsToEvent($id,$bars,$dateTimes) {
-		for ($i = 0; $i < count($bars); $i++) {
-			$time = date_parse($dateTimes[$i]);
-			$time = $time["hour"] . ":" . $time["minute"] . ":" . $time["second"];
-			$result = mysql_query("INSERT INTO event_bars (event_id, bar_id, time, datetime) VALUES (".$id.",".$bars[$i].",'".$time."','".$dateTimes[$i]."')");
+		if (!$result) {
+			echo "Invalid query: $query\nError:".mysql_error()."\n";
 		}
+		return $result;
 	}
 
-	
+	function addBarsToEvent($event_id, $bars) {
+		$result = true;
+		foreach ($bars as $bar) {
+			$bar_id = $bar['bar_id'];
+			$start_time = $bar['start_time'];
+			$location_id = $bar['location_id'];
+			$query = "INSERT INTO event_bars (event_id, bar_id, location_id, start_time) VALUES ($event_id, $bar_id, $location_id, '$start_time')";
+			$result = $result && mysql_query($query);
+		}
+		if (!$result) {
+			echo "Invalid query: $query\nError:".mysql_error()."\n";
+		}
+		return $result;
+	}
+
+/***************************************************************************************************
+ *                                          Deleting Event
+ **************************************************************************************************/
+	function deleteUserCreatedEvents($creator_id) {
+		$query = "DELETE e1, e2, e3 FROM events e1
+			INNER JOIN event_guests e2 ON e1.event_id=e2.event_id
+			INNER JOIN event_bars e3 ON e1.event_id=e3.event_id
+			WHERE e1.creator_id=$creator_id";
+		$result = mysql_query($query);
+		if (!$result) {
+			echo "Invalid query:$query\nError:".mysql_error()."\n";
+		}
+		return $result;
+	}
+
+	function deleteEvent($event_id) {
+		$query = "DELETE e1, e2, e3 FROM events e1
+			INNER JOIN event_guests e2 ON e1.event_id=e2.event_id
+			INNER JOIN event_bars e3 ON e1.event_id=e3.event_id
+			WHERE e1.event_id=$event_id";
+		$result = mysql_query($query);
+		if (!$result) {
+			echo "Invalid query:$query\nError:".mysql_error()."\n";
+		}
+		return $result;
+	}
+
 /***************************************************************************************************
  *                                        Helper Functions
+ **************************************************************************************************/
+	function fetchEventArray($mysql_result) {
+		$eventArray = array();
+		while ($row = mysql_fetch_array($mysql_result)) {
+			$event = array();
+			$event['event_id'] = $row['event_id'];
+			$event['creator_id'] = $row['creator_id'];
+			$event['start_time'] = $row['start_time'];
+			$event['name'] = $row['name'];
+			$event['description'] = $row['description'];
+			$event['image'] = $row['image'];
+			$event['privacy_type'] = $row['privacy_type'];
+			$eventArray[] = $event;
+		}
+		return $eventArray;
+	}
+
+
+/***************************************************************************************************
+ *                                       Not Used
  **************************************************************************************************/
 	function editEventNameDB($eventID,$newTitle){
 		mysql_query("UPDATE events
@@ -205,6 +193,15 @@ class DatabaseInteraction {
 					WHERE id = $eventID");
 	}
 
+	function getEventDataForUser() { 
+		error_log("Error:DB function deprecated\n");
+	}
+	function getEventsDataCreatedByUser(){
+		error_log("Error:DB function deprecated\n");
+	}
+	function getEventDetail($id) {
+		error_log("Error:DB function deprecated\n");
+	}
 
 	// Move out of DB Interaction
 	function getCurrentUserID(){
