@@ -515,7 +515,6 @@ class FacebookEvents{
 	 * This function will create an array of all events
 	 * between specific times. Helper for getEventsUserTime
 	 * 
-
 	 * @param	eventArray	 					$arrayOfEvents		Array of all FBevent Objects
 	 * @param 	UNIXDateTime or SQL Date Time	$start_time			Start time of the window that events are pulled from
 	 * @param 	UNIXDateTime or SQL Date Time	$end_time			End time of the window that events are pulled from
