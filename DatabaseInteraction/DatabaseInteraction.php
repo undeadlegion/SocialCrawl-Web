@@ -73,6 +73,12 @@ class DatabaseInteraction {
 		return $eventArray;
 	}
 
+	function getEventWithShortId($short_id) {
+		$result = mysql_query("SELECT * FROM events WHERE short_id=$short_id");
+		$eventArray = $this->fetchEventArray($result);
+		return $eventArray;
+	}
+
 	function getEventsForId($guest_id) {
 		$result = mysql_query("SELECT * FROM events INNER JOIN event_guests ON events.event_id=event_guests.event_id WHERE event_guests.guest_id=$guest_id ORDER BY start_time ASC");
 		$eventArray = $this->fetchEventArray($result);
@@ -93,7 +99,7 @@ class DatabaseInteraction {
 		$query = "INSERT INTO events (event_id, creator_id, location_id, start_time, name, description, image, privacy_type) VALUES ($values)";
 		$result = mysql_query($query);
 		if (!$result) {
-			echo "Invalid query: $query\nError:".mysql_error()."\n";
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
 		}
 		return $result;
 	}
@@ -105,7 +111,7 @@ class DatabaseInteraction {
 			$result = $result && mysql_query($query);
 		}
 		if (!$result) {
-			echo "Invalid query: $query\nError:".mysql_error()."\n";
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
 		}
 		return $result;
 	}
@@ -120,7 +126,7 @@ class DatabaseInteraction {
 			$result = $result && mysql_query($query);
 		}
 		if (!$result) {
-			echo "Invalid query: $query\nError:".mysql_error()."\n";
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
 		}
 		return $result;
 	}
@@ -135,7 +141,7 @@ class DatabaseInteraction {
 			WHERE e1.creator_id=$creator_id";
 		$result = mysql_query($query);
 		if (!$result) {
-			echo "Invalid query:$query\nError:".mysql_error()."\n";
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
 		}
 		return $result;
 	}
@@ -147,7 +153,7 @@ class DatabaseInteraction {
 			WHERE e1.event_id=$event_id";
 		$result = mysql_query($query);
 		if (!$result) {
-			echo "Invalid query:$query\nError:".mysql_error()."\n";
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
 		}
 		return $result;
 	}
@@ -170,8 +176,27 @@ class DatabaseInteraction {
 		}
 		return $eventArray;
 	}
+	function addNewUser($uid) {
+		$query = "INSERT INTO users (user_id) VALUES ('$uid')";
+		$result = mysql_query($query);
 
+		if (!$result) {
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
+		}
+		return $result;
+	}
+	function linkUserToFB($uid, $fb_id) {
+		$query = "UPDATE users
+			      SET fb_id = $fb_id
+			      WHERE user_id = '$uid'";
+		$result = mysql_query($query);
 
+		if (!$result) {
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
+		}
+		return $result;
+
+	}
 /***************************************************************************************************
  *                                       Not Used
  **************************************************************************************************/

@@ -68,6 +68,7 @@ if ($request_method === 'post') {
 } else if ($request_method === 'get') {
 	$type = isset($_GET['type']) ? $_GET['type'] : '';
 	$id = isset($_GET['id']) ? $_GET['id'] : '';
+	$uid = isset($_GET['uid']) ? $_GET['uid'] : '';
 	$db = new DatabaseInteraction();
 }
 
@@ -81,13 +82,20 @@ if ($type == "bars") {
 
 } elseif ($type == "eventsforid") {
 	$events = $db->getEventsForId($id);
+	$db->linkUserToFB($uid, $id);
 	printEventsXML($events);	
 
 } elseif ($type == "eventwithid") {
 	$events = $db->getEventWithId($id);
+	$db->addNewUser($uid);
 	printEventsXML($events);
 
-} elseif ($type == "barsforevent") {
+}elseif ($type == "eventwithshortid") {
+	$events = $db->getEventWithShortId($id);
+	$db->addNewUser($uid);
+	printEventsXML($events);
+}  
+elseif ($type == "barsforevent") {
 	$barsForEvent = $db->getBarsForEvent($id);
 	printBarsForEventXML($barsForEvent);	
 	
@@ -165,6 +173,7 @@ function printBarsForEventXML($barsForEvent) {
 	$root = $XMLDoc->appendChild($root);
 	
 	foreach ($barsForEvent as $bar) {
+		error_log("Found bar:".$bar['bar_id']."\n");
 		$barElement = $XMLDoc->createElement('Bar');
 		$barElement = $root->appendChild($barElement);
 		$barElement->setAttribute('id',$bar['bar_id']);
@@ -188,7 +197,7 @@ function printBarsXML($bars) {
 		$barElement = $root->appendChild($barElement);
 		$barElement->setAttribute('id',$bar['bar_id']);
 		
-		$nameElement = $XMLDoc->createElement('name',$bar['name']);
+		$nameElement = $XMLDoc->createElement('name',htmlentities($bar['name']));
 		$addressElement = $XMLDoc->createElement('address',$bar['address']);
 		$descriptionElement = $XMLDoc->createElement('description',htmlentities($bar['description']));
 		$quickElement = $XMLDoc->createElement('quicklogo',$bar['quick_logo']);
