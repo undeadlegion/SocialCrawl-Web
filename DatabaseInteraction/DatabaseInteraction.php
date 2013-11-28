@@ -31,6 +31,7 @@ class DatabaseInteraction {
 		while ($row = mysql_fetch_array($result)) {
 			$bar = array();
 			$bar['bar_id'] = $row['bar_id'];
+			$bar['location_id'] = $row['location_id'];
 			$bar['name'] = $row['name'];
 			$bar['address'] = $row['address'];
 			$bar['description'] = $row['description'];
@@ -45,18 +46,32 @@ class DatabaseInteraction {
 	}
 	
 	function getBarsForEvent($event_id) {
-		$result = mysql_query("SELECT * FROM event_bars where event_id=$event_id ORDER BY start_time ASC");
+		$result = mysql_query("SELECT * FROM event_bars WHERE event_id=$event_id ORDER BY start_time ASC");
 		$barArray = array();
 		
 		while ($row = mysql_fetch_array($result)) {
 			$bar = array();
 			$bar['bar_id'] = $row['bar_id'];
+			$bar['location_id'] = $row['location_id'];
 			$bar['start_time'] = $row['start_time'];
+			$bar['specials'] = $this->getBarSpecials($bar);
 			$barArray[] = $bar;
 		}
 		return $barArray;
 	}
 
+	function getBarSpecials($bar) {
+		$bar_id = $bar['bar_id'];
+		$location_id = $bar['location_id'];
+		$query = "SELECT * FROM bar_specials WHERE bar_id=$bar_id AND location_id=$location_id";
+		$result = mysql_query($query);
+		if (!$result) {
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
+		}
+		$row = mysql_fetch_array($result);
+		$specials = $row['specials'];
+		return $specials;
+	}
 
 /***************************************************************************************************
  *                                        Events Fetching
@@ -91,6 +106,16 @@ class DatabaseInteraction {
 		return $eventArray;		
 	}
 
+	function getEventSpecials($event_id) {
+		$bars = $this->getBarsForEvent($event_id);
+		$specialsArray = array();
+		foreach ($bars as $bar) {
+			$specials = $this->getBarSpecials($bar);
+			$bar['specials'] = $specials;
+			$specialsArray[] = $bar;
+		}
+		return $specialsArray;
+	}
 /***************************************************************************************************
  *                                          Event Creation
  **************************************************************************************************/
@@ -122,15 +147,41 @@ class DatabaseInteraction {
 			$bar_id = $bar['bar_id'];
 			$start_time = $bar['start_time'];
 			$location_id = $bar['location_id'];
-			$query = "INSERT INTO event_bars (event_id, bar_id, location_id, start_time) VALUES ($event_id, $bar_id, $location_id, '$start_time')";
+			$query = "INSERT INTO event_bars (event_id, bar_id, location_id, start_time) 
+					  VALUES ($event_id, $bar_id, $location_id, '$start_time')
+					  ON DUPLICATE KEY UPDATE start_time='$start_time'";
 			$result = $result && mysql_query($query);
+
 		}
 		if (!$result) {
 			error_log("Invalid query: $query\nError:".mysql_error()."\n");
 		}
 		return $result;
 	}
+	function editBarTimes($event_id, $bars) {
+		$editedBar = $bars[0];
 
+		error_log("EDITBARTIMES".var_dump($editedBar)."\n");
+		$start_time = $editedBar['start_time'];
+		error_log("start time:$start_time\n");
+		$edited_time = $editedBar['edited_time'];
+		$bar_id = $editedBar['bar_id'];
+		$location_id = $editedBar['location_id'];
+
+		$query = "UPDATE event_bars
+			      SET start_time='$edited_time'
+			      WHERE event_id='$event_id'
+			      	AND bar_id=$bar_id
+			      	AND location_id=$location_id
+			      	AND start_time='$start_time'";
+		error_log("\nQuery:\n$query\n");
+		$result = mysql_query($query);
+
+		if (!$result) {
+			error_log("Invalid query: $query\nError:".mysql_error()."\n");
+		}
+		return $result;
+	}
 /***************************************************************************************************
  *                                          Deleting Event
  **************************************************************************************************/

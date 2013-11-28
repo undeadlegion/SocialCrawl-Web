@@ -12,6 +12,7 @@ $request_method = strtolower($_SERVER['REQUEST_METHOD']);
 error_log("Request Method: $request_method");
 if ($request_method === 'post') {
 	ob_start();
+
 	// decode POSTed json
 	$input = file_get_contents("php://input");
 	$createdEvent = json_decode($input);
@@ -20,6 +21,7 @@ if ($request_method === 'post') {
 	$access_token = getAccessToken();
 	
 	// extract event parameters
+	$should_create = $createdEvent->should_create;
 	$creator_id = $createdEvent->creator_id;
 	$name = $createdEvent->name;
 	$description = $createdEvent->description;
@@ -29,38 +31,48 @@ if ($request_method === 'post') {
 	$selected_bars = json_decode(json_encode($createdEvent->selected_bars), true);
 	echo "\nSELECTED BARS:".var_export($selected_bars, true)."\n";
 	echo "\nINVITED GUESTS:".var_export($invited_guests, true)."\n";
-	
+	echo "SHOULD CREATE:$should_create\n";
+
 	// TESTING
 	$privacy_type = "SECRET";
 	$image = NULL;
 	$location_id = 12;
 
+	// New Event
+	if ($should_create == "YES") {
+		echo "Creating an event";
+		// Facebook
+		$event_id = createEvent($access_token, $creator_id, $name, $description, $start_time, $final_time, '', $privacy_type);
+		$invited = inviteGuests($access_token, $event_id, $invited_guests);
 
-	// Facebook
-	$event_id = createEvent($access_token, $creator_id, $name, $description, $start_time, $final_time, '', $privacy_type);
-	$invited = inviteGuests($access_token, $event_id, $invited_guests);
-	// $event_id = 123456;
-	// $invited = true;
+		// Database
+		$db = new DatabaseInteraction();
+		$db_created = $db->addNewEvent($event_id, $creator_id, $location_id, $start_time, $name, $description, $image, $privacy_type);
+		$db_bars = $db->addBarsToEvent($event_id, $selected_bars);
 
-	// Database
-	$db = new DatabaseInteraction();
-	$db_created = $db->addNewEvent($event_id, $creator_id, $location_id, $start_time, $name, $description, $image, $privacy_type);
-	$db_bars = $db->addBarsToEvent($event_id, $selected_bars);
+		$invited_guests[] = $creator_id;	
+		$db_invited = $db->addGuestsToEvent($event_id, $invited_guests);
+		
 
-	$invited_guests[] = $creator_id;	
-	$db_invited = $db->addGuestsToEvent($event_id, $invited_guests);
-	
+		// print debug info
+		echo "\nToken:\n$access_token\n";
+		echo "\nJSON:\n$input\n";
+		echo "\nCreated Event:".var_export($createdEvent,true)."\n";
+		echo "Created FB event:$event_id\n";
+		echo "Invited FB guests:".var_export($invited, true)."\n";
+		echo "Created in DB:".var_export($db_created, true)."\n";
+		echo "Bars added to DB:".var_export($db_bars, true)."\n";
+		echo "Guests added to DB:".var_export($db_invited, true)."\n";
+	// Edit Event
+	} else {
+		echo "Editing the event\n";
+		
+		$db = new DatabaseInteraction();
+		// $event_id = $createdEvent->event_id;
+		$event_id = "259000154249904";
+		$db_bars = $db->editBarTimes($event_id, $selected_bars);
 
-	// print debug info
-	echo "\nToken:\n$access_token\n";
-	echo "\nJSON:\n$input\n";
-	echo "\nCreated Event:".var_export($createdEvent,true)."\n";
-	echo "Created FB event:$event_id\n";
-	echo "Invited FB guests:".var_export($invited, true)."\n";
-	echo "Created in DB:".var_export($db_created, true)."\n";
-	echo "Bars added to DB:".var_export($db_bars, true)."\n";
-	echo "Guests added to DB:".var_export($db_invited, true)."\n";
-
+	}
 	$contents = ob_get_contents();
 	ob_end_clean();
 	error_log($contents);
@@ -100,7 +112,7 @@ elseif ($type == "barsforevent") {
 	printBarsForEventXML($barsForEvent);	
 	
 } elseif ($type == "specialsforevent"){
-	$specials = $db->getEventSpecialsForEvent($id);
+	$specials = $db->getEventSpecials($id);
 	printSpecialsXML($specials);
 
 } elseif ($type == "feedback") {
@@ -173,13 +185,14 @@ function printBarsForEventXML($barsForEvent) {
 	$root = $XMLDoc->appendChild($root);
 	
 	foreach ($barsForEvent as $bar) {
-		error_log("Found bar:".$bar['bar_id']."\n");
 		$barElement = $XMLDoc->createElement('Bar');
 		$barElement = $root->appendChild($barElement);
 		$barElement->setAttribute('id',$bar['bar_id']);
 
-		$timeElement = $XMLDoc->createElement('time',$bar['start_time']);
+		$specialsElement = $XMLDoc->createElement('specials', $bar['specials']);
+		$timeElement = $XMLDoc->createElement('time', $bar['start_time']);
 		$barElement->appendChild($timeElement);
+		$barElement->appendChild($specialsElement);
 	}
 	print $XMLDoc->saveXML();
 }
@@ -198,8 +211,9 @@ function printBarsXML($bars) {
 		$barElement->setAttribute('id',$bar['bar_id']);
 		
 		$nameElement = $XMLDoc->createElement('name',htmlentities($bar['name']));
-		$addressElement = $XMLDoc->createElement('address',$bar['address']);
+		$addressElement = $XMLDoc->createElement('address',htmlentities($bar['address']));
 		$descriptionElement = $XMLDoc->createElement('description',htmlentities($bar['description']));
+		$websiteElement = $XMLDoc->createElement('website',htmlentities($bar['website']));
 		$quickElement = $XMLDoc->createElement('quicklogo',$bar['quick_logo']);
 		$detailedElement = $XMLDoc->createElement('detailedlogo', $bar['detailed_logo']);
 		$longitudeElement = $XMLDoc->createElement('longitude', $bar['longitude']);
@@ -208,6 +222,7 @@ function printBarsXML($bars) {
 		$barElement->appendChild($nameElement);
 		$barElement->appendChild($addressElement);
 		$barElement->appendChild($descriptionElement);
+		$barElement->appendChild($websiteElement);
 		$barElement->appendChild($quickElement);
 		$barElement->appendChild($detailedElement);
 		$barElement->appendChild($longitudeElement);
